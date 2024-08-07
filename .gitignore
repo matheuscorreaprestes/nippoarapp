@@ -1,0 +1,69 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/ # Dependendo do seu projeto, você pode querer manter algumas configurações aqui
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Android
+*.keystore
+*.jks
+local.properties
+
+# iOS
+Pods/
+Podfile.lock
+flutter_build/
+*.xcuserstate
+*.xcworkspace
+*.xcscheme
+*.xcuserdata
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# Environment files
+.env # Use this to ignore environment configuration files

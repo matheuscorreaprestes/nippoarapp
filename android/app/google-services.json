@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "236636744423",
+    "project_id": "nippoarapp-1251e",
+    "storage_bucket": "nippoarapp-1251e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:236636744423:android:be611687093c1767aa9042",
+        "android_client_info": {
+          "package_name": "br.com.prestes.nippoarapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVg1h-BPHWN8HQIhF8e__xVHBs3NsyQwY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
