@@ -213,7 +213,7 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
                       onFail: _onFail,
                     );
 
-                    Navigator.pop(context); // Fecha o bottom sheet após o cadastro
+                    Navigator.pop(context);
                   }
                 },
               ),
@@ -310,7 +310,7 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
                       onFail: _onFail,
                     );
 
-                    Navigator.pop(context); // Fecha o bottom sheet após a atualização
+                    Navigator.pop(context);
                   }
                 },
               ),

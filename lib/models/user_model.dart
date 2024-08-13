@@ -16,7 +16,7 @@ class UserModel extends Model {
     _loadCurrentUser();
   }
 
-  String get userType => userData['userType'] ?? 'client';
+  String get userType => userData['usertype'] ?? 'client';
 
   void _loadCurrentUser() async {
     firebaseUser = _auth.currentUser;
@@ -28,7 +28,7 @@ class UserModel extends Model {
 
   User? get currentUser => firebaseUser;
 
-  // Método para registrar um novo usuário
+  // Registrar Usúario
   void signUp({
     required Map<String, dynamic> userData,
     required String pass,
@@ -49,7 +49,7 @@ class UserModel extends Model {
 
       onSuccess();
     } catch (e) {
-      print(e); // Adicione logs ou rastreamento aqui
+      print(e);
       onFail();
     } finally {
       isLoading = false;
@@ -57,7 +57,7 @@ class UserModel extends Model {
     }
   }
 
-  // Método para fazer login de um usuário existente
+  // Login usúario
   void signIn({
     required String email,
     required String pass,
@@ -78,7 +78,7 @@ class UserModel extends Model {
 
       onSuccess();
     } catch (e) {
-      print(e); // Adicione logs ou rastreamento aqui
+      print(e);
       onFail();
     } finally {
       isLoading = false;
@@ -86,16 +86,16 @@ class UserModel extends Model {
     }
   }
 
-  // Método para recuperar a senha do usuário
+  // Recuperar senha
   void recoverPass(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } catch (e) {
-      print(e); // Adicione logs ou rastreamento aqui
+      print(e);
     }
   }
 
-  // Método para salvar os dados do usuário no Firestore
+  // Salvar dados
   Future<void> _saveUserData(Map<String, dynamic> userData) async {
     this.userData = userData;
     if (firebaseUser != null) {
@@ -103,7 +103,7 @@ class UserModel extends Model {
     }
   }
 
-  // Método para carregar os dados do usuário do Firestore
+  // Carregar dados do usúario
   Future<void> loadUserData() async {
     if (firebaseUser == null) {
       firebaseUser = _auth.currentUser;
@@ -118,7 +118,7 @@ class UserModel extends Model {
     }
   }
 
-  // Método para atualizar os dados do usuário no Firestore
+  // Atualiza perfil do usúario
   void updateUser({
     required Map<String, dynamic> userData,
     String? pass,
@@ -145,7 +145,7 @@ class UserModel extends Model {
         onFail();
       }
     } catch (e) {
-      print(e); // Adicione logs ou rastreamento aqui
+      print(e);
       onFail();
     } finally {
       isLoading = false;
@@ -153,7 +153,7 @@ class UserModel extends Model {
     }
   }
 
-  // Método para deletar a conta do usuário no Firestore e no Authentication
+  // Deleta Conta do usúario
   void deleteUser({
     required VoidCallback onSuccess,
     required VoidCallback onFail,
@@ -176,7 +176,7 @@ class UserModel extends Model {
         onFail();
       }
     } catch (e) {
-      print(e); // Adicione logs ou rastreamento aqui
+      print(e);
       onFail();
     } finally {
       isLoading = false;

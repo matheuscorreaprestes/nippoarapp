@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nippoarapp/screens/login_screen.dart';
 import 'package:nippoarapp/screens/loyalty_screen.dart';
+import 'package:nippoarapp/screens/planifier_screen.dart';
 import 'package:nippoarapp/screens/profile_screen.dart';
 import 'package:nippoarapp/screens/vehicle_register_screen.dart';
 import 'package:nippoarapp/widgets/custom_drawer.dart';
@@ -45,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ProfileScreen(),
           VehicleRegisterScreen(),
           LoyaltyScreen(),
+          AgendarScreen(),
         ],
       ),
       drawer: CustomDrawer(pageController: _pageController),

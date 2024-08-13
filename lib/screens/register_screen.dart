@@ -159,6 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           "celular": _phoneController.text,
                           "data de nascimento": _birthController.text,
                           "email": _emailController.text,
+                          "usertype" : "cliente",
                         };
 
                         model.signUp(

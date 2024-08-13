@@ -28,7 +28,7 @@ class LoyaltyModel extends Model {
       notifyListeners();
 
       DocumentSnapshot docUser = await _firestore.collection("users").doc(firebaseUser!.uid).get();
-      Map<String, dynamic> data = docUser.data() as Map<String, dynamic>; // Cast explícito
+      Map<String, dynamic> data = docUser.data() as Map<String, dynamic>;
       points = data['points'] ?? 0;
 
       isLoading = false;
