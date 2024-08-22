@@ -48,7 +48,7 @@ class CustomDrawer extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Olá,",
+                            "Olá, ",
                             style: TextStyle(
                                 fontSize: 25.0, fontWeight: FontWeight.bold),
                           ),

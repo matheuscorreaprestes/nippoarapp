@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/planifier_model.dart';
+import 'package:nippoarapp/models/schedule_model.dart';
 
 class HorarioCard extends StatelessWidget {
   final Horario horario;
@@ -11,7 +11,7 @@ class HorarioCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        title: Text('${horario.veiculo} - ${horario.placa}'),
+        title: Text('${horario.veiculo} - ${horario.veiculo}'),
         subtitle: Text(
             '${horario.data.toLocal()} - Serviço: ${horario.servico}'),
         trailing: IconButton(

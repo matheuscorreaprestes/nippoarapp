@@ -23,7 +23,6 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
         title: Text("Veículos"),
         centerTitle: true,
       ),

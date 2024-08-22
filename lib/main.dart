@@ -1,11 +1,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:nippoarapp/models/loyalty_model.dart';
-import 'package:nippoarapp/models/planifier_model.dart';
+import 'package:nippoarapp/models/schedule_model.dart';
 import 'package:nippoarapp/models/user_model.dart';
 import 'package:nippoarapp/models/vehicle_model.dart';
 import 'package:nippoarapp/screens/login_screen.dart';
-import 'package:nippoarapp/screens/planifier_screen.dart';
+import 'package:nippoarapp/screens/commitments_screen.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -31,8 +31,8 @@ class MyApp extends StatelessWidget{
       model: VehicleModel(),
       child: ScopedModel<LoyaltyModel>(
       model: LoyaltyModel(),
-      child: ScopedModel<AgendarModel>(
-      model: AgendarModel(),
+      child: ScopedModel<ScheduleModel>(
+      model: ScheduleModel(),
       child: MaterialApp(
             title: "Nippoar",
             theme: ThemeData(
