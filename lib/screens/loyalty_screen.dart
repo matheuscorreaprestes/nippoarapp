@@ -66,7 +66,11 @@ class LoyaltyScreen extends StatelessWidget {
             onPressed: () {
               _showEditLoyaltyRulesDialog(context);
             },
-            child: Text("Editar Regras de Fidelidade"),
+            child: Text("Editar Regras de Fidelidade",
+              style: TextStyle(color: Colors.black,
+                  backgroundColor: Theme.of(context).primaryColor
+              ),
+            ),
           ),
         ],
       ),
@@ -80,7 +84,7 @@ class LoyaltyScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Editar Regras de Fidelidade"),
+          title: Text("Editar Regras de Fidelidade",),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

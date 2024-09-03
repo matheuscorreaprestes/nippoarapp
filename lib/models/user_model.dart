@@ -39,6 +39,8 @@ class UserModel extends Model {
     notifyListeners();
 
     try {
+      await _auth.setPersistence(Persistence.LOCAL);
+
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: userData["email"],
         password: pass,
@@ -55,6 +57,10 @@ class UserModel extends Model {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  bool isLoggedIn() {
+    return firebaseUser != null;
   }
 
   // Login usúario
@@ -190,4 +196,5 @@ class UserModel extends Model {
     userData = {};
     notifyListeners();
   }
+
 }

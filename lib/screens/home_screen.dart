@@ -43,11 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         children: <Widget>[
-          ScheduleScreen(),
+          CommitmentsScreen(),
           ProfileScreen(),
           VehicleRegisterScreen(),
           LoyaltyScreen(),
-          CommitmentsScreen(),
         ],
       ),
       drawer: CustomDrawer(pageController: _pageController),

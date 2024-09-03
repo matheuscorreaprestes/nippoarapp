@@ -43,6 +43,7 @@ dependencies:
   br_validators: ^2.0.3
   flutter_pw_validator: ^1.6.0
   table_calendar: ^3.0.0
+  intl: ^0.18.0
 
 dev_dependencies:
   flutter_test:

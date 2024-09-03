@@ -12,8 +12,16 @@ class ScheduleScreen extends StatefulWidget {
   _ScheduleScreenState createState() => _ScheduleScreenState();
 }
 
+extension DateTimeExtensions on DateTime {
+  bool isSameDate(DateTime other) {
+    return this.year == other.year &&
+        this.month == other.month &&
+        this.day == other.day;
+  }
+}
+
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  TimeOfDay? horarioSelecionado;
+  TimeOfDay? horarioSelecionado; // Variável de instância para o horário selecionado
 
   @override
   Widget build(BuildContext context) {
@@ -27,53 +35,58 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-      child:FutureBuilder(
-        future: vehicleModel.getVehicles(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar veículos'));
-          } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Não há veículos cadastrados'),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                            builder: (context) => VehicleRegisterScreen()),
-                      );
-                    },
-                    child: Text('Cadastrar Veículo'),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            final vehicles = snapshot.data!.docs.map((doc) {
-              return Veiculo(
-                marca: doc['marca'],
-                modelo: doc['modelo'],
-                placa: doc['placa'],
+        child: FutureBuilder(
+          future: vehicleModel.getVehicles(),
+          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Erro ao carregar veículos'));
+            } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Não há veículos cadastrados'),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => VehicleRegisterScreen(),
+                          ),
+                        );
+                      },
+                      child: Text('Cadastrar Veículo'),
+                    ),
+                  ],
+                ),
               );
-            }).toList();
+            } else {
+              final vehicles = snapshot.data!.docs.map((doc) {
+                return Veiculo(
+                  marca: doc['marca'],
+                  modelo: doc['modelo'],
+                  placa: doc['placa'],
+                );
+              }).toList();
 
-            return Column(
-              children: [
-                _selecionarVeiculo(context, agendarModel, vehicles),
-                _selecionarDataHora(context, agendarModel),
-                _selecionarHorarios(context, agendarModel),
-                _selecionarServico(context, agendarModel),
-                _mostrarConfirmacao(context, agendarModel, userModel),
-              ],
-            );
-          }
-        },
-       ),
+              return Column(
+                children: [
+                  _selecionarVeiculo(context, agendarModel, vehicles),
+                  _selecionarDataHora(context, agendarModel, userModel),
+                  ScopedModelDescendant<ScheduleModel>(
+                    builder: (context, child, model) {
+                      return _selecionarHorarios(context, model, userModel);
+                    },
+                  ),
+                  _selecionarServico(context, agendarModel),
+                  _mostrarConfirmacao(context, agendarModel, userModel),
+                ],
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -96,7 +109,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _selecionarDataHora(BuildContext context, ScheduleModel model) {
+  Widget _selecionarDataHora(BuildContext context, ScheduleModel model, UserModel userModel) {
     return Column(
       children: [
         Row(
@@ -105,15 +118,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  model.selecionarData(DateTime.now());
+                  String userId = userModel.currentUser!.uid;
+                  model.selecionarData(DateTime.now(), userId);
                 });
               },
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.resolveWith((states) {
                   if (model.dataSelecionada != null &&
-                      model.dataSelecionada!.day == DateTime.now().day &&
-                      model.dataSelecionada!.month == DateTime.now().month &&
-                      model.dataSelecionada!.year == DateTime.now().year) {
+                      model.dataSelecionada!.isSameDate(DateTime.now())) {
                     return Colors.grey;
                   }
                   return Theme.of(context).primaryColor;
@@ -128,14 +140,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  model.selecionarData(DateTime.now().add(Duration(days: 1)));
+                  String userId = userModel.currentUser!.uid;
+                  model.selecionarData(DateTime.now().add(Duration(days: 1)), userId);
                 });
               },
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.resolveWith((states) {
                   if (model.dataSelecionada != null &&
-                      model.dataSelecionada!.day ==
-                          DateTime.now().add(Duration(days: 1)).day) {
+                      model.dataSelecionada!.isSameDate(DateTime.now().add(Duration(days: 1)))) {
                     return Colors.grey;
                   }
                   return Theme.of(context).primaryColor;
@@ -157,17 +169,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 );
                 if (selectedDate != null) {
                   setState(() {
-                    model.selecionarData(selectedDate);
+                    String userId = userModel.currentUser!.uid;
+                    model.selecionarData(selectedDate, userId);
                   });
                 }
               },
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.resolveWith((states) {
-                  if (model.dataSelecionada != null &&
-                      model.dataSelecionada!.day == DateTime.now().day) {
-                    return Colors.grey;
-                  }
-                  return Theme.of(context).primaryColor;
+                  return model.dataSelecionada != null &&
+                      model.dataSelecionada!.isSameDate(model.dataSelecionada!)
+                      ? Colors.grey
+                      : Theme.of(context).primaryColor;
                 }),
               ),
               child: Text(
@@ -181,56 +193,36 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _selecionarHorarios(BuildContext context, ScheduleModel model) {
+  Widget _selecionarHorarios(BuildContext context, ScheduleModel model, UserModel userModel) {
     if (model.dataSelecionada == null) {
-      return SizedBox.shrink();
+      return Center(child: Text('Selecione uma data primeiro.'));
     }
 
-    if (model.dataSelecionada!.weekday == DateTime.sunday) {
-      return Center(child: Text('Não é possível agendar aos domingos.'));
-    }
-
-    return Column(
-      children: [
-        horarioSelecionado != null
-            ? Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Text(
-            'Horário Selecionado: ${horarioSelecionado!.format(context)}',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-        )
-            : Container(),
-        Column(
-          children: model.horariosDisponiveis.map((hora) {
-            final isDisponivel = !model.agendamentos.any((agendamento) =>
-            agendamento.data.day == model.dataSelecionada!.day &&
-                agendamento.data.month == model.dataSelecionada!.month &&
-                agendamento.data.year == model.dataSelecionada!.year &&
-                agendamento.data.hour == hora.hour &&
-                agendamento.data.minute == hora.minute);
-
-            return ListTile(
-              title: Text('Horário: ${hora.format(context)}'),
-              tileColor:
-              isDisponivel ? Colors.grey : Theme.of(context).primaryColor,
-              onTap: isDisponivel
-                  ? () {
+    if (model.horariosDisponiveis.isEmpty) {
+      return Text(
+        'Sem horários disponíveis',
+        style: TextStyle(color: Colors.red),
+      );
+    } else {
+      model.ordenarHorarios();
+      return Column(
+        children: model.horariosDisponiveis.map((horario) {
+          return ListTile(
+            title: Text(horario.format(context)),
+            trailing: Radio<TimeOfDay>(
+              value: horario,
+              groupValue: horarioSelecionado,
+              onChanged: (TimeOfDay? value) {
                 setState(() {
-                  horarioSelecionado = hora;
-                  model.selecionarHora(hora);  // Salva o horário selecionado no model
+                  horarioSelecionado = value!;
+                  model.selecionarHora(value);
                 });
-              }
-                  : null,
-            );
-          }).toList(),
-        ),
-      ],
-    );
+              },
+            ),
+          );
+        }).toList(),
+      );
+    }
   }
 
   Widget _selecionarServico(BuildContext context, ScheduleModel model) {
@@ -254,35 +246,73 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  Widget _mostrarConfirmacao(BuildContext context, ScheduleModel model, UserModel userModel) {
-    return model.veiculoSelecionado != null &&
-        model.dataSelecionada != null &&
-        model.horaSelecionada != null &&
-        model.servicoSelecionado != null
-        ? ElevatedButton(
+  Widget _mostrarConfirmacao(BuildContext context, ScheduleModel agendarModel, UserModel userModel) {
+    return ElevatedButton(
       onPressed: () async {
-        final nomeCliente = userModel.userData['name'] ?? 'Nome do cliente'; // Substitua pelo nome do cliente autenticado
-        final novoHorario = Horario(
-          data: DateTime(
-            model.dataSelecionada!.year,
-            model.dataSelecionada!.month,
-            model.dataSelecionada!.day,
-            model.horaSelecionada!.hour,
-            model.horaSelecionada!.minute,
-          ),
-          veiculo: model.veiculoSelecionado!,
-          servico: model.servicoSelecionado!,
-        );
+        final nomeCliente = userModel.userData['name'] ?? 'Nome do cliente';
+        final userId = userModel.currentUser!.uid;
+        if (agendarModel.veiculoSelecionado != null &&
+            agendarModel.dataSelecionada != null &&
+            agendarModel.horaSelecionada != null &&
+            agendarModel.servicoSelecionado != null) {
 
-        // Chama o método para adicionar o agendamento e salva no Firestore
-        await model.adicionarAgendamento(novoHorario, nomeCliente);
+          DateTime dataAgendada = DateTime(
+            agendarModel.dataSelecionada!.year,
+            agendarModel.dataSelecionada!.month,
+            agendarModel.dataSelecionada!.day,
+            agendarModel.horaSelecionada!.hour,
+            agendarModel.horaSelecionada!.minute,
+          );
 
-        // Fecha a tela de horários após confirmar
-        Navigator.pop(context);
+          Horario novoHorario = Horario(
+            data: dataAgendada,
+            veiculo: agendarModel.veiculoSelecionado!,
+            nomeCliente: nomeCliente,
+            userId: userId,
+            servico: agendarModel.servicoSelecionado!,
+          );
+
+          await agendarModel.adicionarAgendamento(novoHorario, nomeCliente, userId);
+          setState(() {
+            horarioSelecionado = null;
+            agendarModel.resetarSelecoes();
+          });
+
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Confirmação'),
+              content: Text('Horário agendado com sucesso!'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Erro'),
+              content: Text('Por favor, selecione todos os campos.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
       },
-      child: Text('Confirmar Agendamento'),
-    )
-        : SizedBox.shrink();
-  }
 
+      child: Text('Confirmar Agendamento'),
+    );
+  }
 }
