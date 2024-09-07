@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:nippoarapp/models/servico_model.dart';
 import 'package:nippoarapp/models/user_model.dart';
 import 'package:nippoarapp/models/schedule_model.dart';
 import 'package:nippoarapp/models/vehicle_model.dart';
@@ -231,7 +232,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         showDialog(
           context: context,
           builder: (context) => ServicoSelectionDialog(
-            onServicoSelected: (servico) {
+            onServicoSelected: (Servico servico) {
               model.selecionarServico(servico);
             },
           ),
@@ -245,6 +246,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
     );
   }
+
+
 
   Widget _mostrarConfirmacao(BuildContext context, ScheduleModel agendarModel, UserModel userModel) {
     return ElevatedButton(
@@ -264,12 +267,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             agendarModel.horaSelecionada!.minute,
           );
 
+          double valorServico = agendarModel.valorServicoSelecionado ?? 0.0;
+
           Horario novoHorario = Horario(
             data: dataAgendada,
             veiculo: agendarModel.veiculoSelecionado!,
             nomeCliente: nomeCliente,
             userId: userId,
             servico: agendarModel.servicoSelecionado!,
+            valorServico: valorServico,
           );
 
           await agendarModel.adicionarAgendamento(novoHorario, nomeCliente, userId);

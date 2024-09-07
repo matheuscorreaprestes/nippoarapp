@@ -79,5 +79,3 @@ class _CommitmentsScreenState extends State<CommitmentsScreen> {
   }
 
 }
-
-

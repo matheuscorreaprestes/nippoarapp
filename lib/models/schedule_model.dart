@@ -1,6 +1,9 @@
+import 'dart:ffi';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:nippoarapp/models/servico_model.dart';
 import 'package:nippoarapp/models/user_model.dart';
 import 'package:scoped_model/scoped_model.dart';
 
@@ -15,6 +18,7 @@ class ScheduleModel extends Model {
   DateTime? dataSelecionada;
   TimeOfDay? horaSelecionada;
   String? servicoSelecionado;
+  double? valorServicoSelecionado;
 
   // Método para carregar agendamentos do cliente
   Future<void> carregarAgendamentosDoCliente(String userId) async {
@@ -51,6 +55,7 @@ class ScheduleModel extends Model {
           servico: doc.get('servico') ?? 'Não especificado',
           nomeCliente: doc.get('nomeCliente') ?? 'Não especificado',
           userId: doc.get('userId') ?? 'Não especificado',
+          valorServico: doc.get('valorServico') ?? null,
         ));
       }
       notifyListeners();
@@ -60,31 +65,38 @@ class ScheduleModel extends Model {
   }
 
   // Método consolidado para carregar horários disponíveis
-  Future<void> carregarHorariosDisponiveis(String userId, DateTime dataSelecionada) async {
+  Future<void> carregarHorariosDisponiveis(DateTime dataSelecionada) async {
     String dataFormatada = DateFormat('yyyyMMdd').format(dataSelecionada);
     List<String> todosHorarios = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
     horariosDisponiveis.clear();
 
     try {
-      // Obtendo todos os agendamentos na data selecionada
       QuerySnapshot agendamentosSnapshot = await _firestore
-          .collection('users')
-          .doc(userId)
           .collection('agendamentos')
-          .where('data', isEqualTo: dataFormatada)
+          .doc(dataFormatada)
+          .collection('horarios')
           .get();
 
-      // Conjunto de horários já agendados para a data
+      if (agendamentosSnapshot.docs.isEmpty) {
+        print("Nenhum horário encontrado para a data: $dataFormatada");
+      } else {
+        for (var doc in agendamentosSnapshot.docs) {
+          print("Horário encontrado: ${doc.id}, dados: ${doc.data()}");
+        }
+      }
+
       Set<String> horariosAgendados = agendamentosSnapshot.docs
           .map((doc) => doc.get('hora') as String)
           .toSet();
 
-      // Filtrando horários disponíveis
       for (String horario in todosHorarios) {
         if (!horariosAgendados.contains(horario)) {
           horariosDisponiveis.add(_convertStringToTimeOfDay(horario));
         }
       }
+
+      // Verificar se horários disponíveis estão sendo carregados corretamente
+      print("Horários disponíveis: $horariosDisponiveis");
     } catch (e) {
       print("Erro ao carregar horários disponíveis: $e");
     }
@@ -109,6 +121,57 @@ class ScheduleModel extends Model {
     return horarios;
   }
 
+
+// Método para carregar agendamentos para o gestor (userType = manager)
+  Future<void> carregarHorariosManager(DateTime dataSelecionada) async {
+    String dataFormatada = DateFormat('yyyyMMdd').format(dataSelecionada);
+    agendamentos.clear();
+
+    try {
+      // Busca agendamentos na coleção geral de 'agendamentos'
+      QuerySnapshot snapshot = await _firestore
+          .collection('agendamentos')
+          .doc(dataFormatada)
+          .collection('horarios')
+          .get();
+
+      for (DocumentSnapshot doc in snapshot.docs) {
+        String horaString = doc.get('hora');
+        List<String> partesHora = horaString.split(':');
+        TimeOfDay hora = TimeOfDay(
+          hour: int.parse(partesHora[0]),
+          minute: int.parse(partesHora[1]),
+        );
+
+        agendamentos.add(Horario(
+          data: DateTime(
+            dataSelecionada.year,
+            dataSelecionada.month,
+            dataSelecionada.day,
+            hora.hour,
+            hora.minute,
+          ),
+          veiculo: Veiculo(
+            marca: doc.get('veiculo.marca') ?? 'Desconhecida',
+            modelo: doc.get('veiculo.modelo') ?? 'Desconhecido',
+            placa: doc.get('veiculo.placa') ?? 'Desconhecida',
+          ),
+          servico: doc.get('servico') ?? 'Não especificado',
+          nomeCliente: doc.get('nomeCliente') ?? 'Não especificado',
+          userId: doc.get('userId') ?? 'Não especificado',
+          valorServico: doc.get('valorServico') ?? 0.0,
+        ));
+      }
+
+      // Ordena os agendamentos por horário
+      agendamentos.sort((a, b) => a.data.compareTo(b.data));
+      notifyListeners();
+    } catch (e) {
+      print('Erro ao carregar agendamentos para o gestor: $e');
+    }
+  }
+
+
   Future<void> adicionarAgendamento(Horario horario, String nomeCliente, String userId) async {
     try {
       // Adiciona agendamento na coleção do usuário
@@ -117,7 +180,7 @@ class ScheduleModel extends Model {
           .doc(userId)
           .collection('agendamentos')
           .add({
-        'data': DateFormat('yyyy-MM-dd').format(horario.data),
+        'data': DateFormat('yyyyMMdd').format(horario.data),
         'hora': '${horario.data.hour.toString().padLeft(2, '0')}:${horario.data.minute.toString().padLeft(2, '0')}',
         'veiculo': {
           'marca': horario.veiculo.marca,
@@ -125,6 +188,7 @@ class ScheduleModel extends Model {
           'placa': horario.veiculo.placa,
         },
         'servico': horario.servico,
+        'valorServico': horario.valorServico,
         'nomeCliente': nomeCliente,
         'status': 'confirmado',
         'userId': userId,
@@ -146,6 +210,7 @@ class ScheduleModel extends Model {
           'placa': horario.veiculo.placa,
         },
         'servico': horario.servico,
+        'valorServico': horario.valorServico,
         'nomeCliente': nomeCliente,
         'userId': userId,
         'status': 'confirmado',
@@ -196,13 +261,12 @@ class ScheduleModel extends Model {
     }
   }
 
-
-
   void resetarSelecoes() {
     veiculoSelecionado = null;
     dataSelecionada = null;
     horaSelecionada = null;
     servicoSelecionado = null;
+    valorServicoSelecionado = null;
     notifyListeners();
   }
 
@@ -219,7 +283,7 @@ class ScheduleModel extends Model {
 
   void selecionarData(DateTime data, String userId) {
     dataSelecionada = data;
-    carregarHorariosDisponiveis(userId, dataSelecionada!);
+    carregarHorariosDisponiveis(dataSelecionada!);
     notifyListeners();
   }
 
@@ -228,8 +292,9 @@ class ScheduleModel extends Model {
     notifyListeners();
   }
 
-  void selecionarServico(String servico) {
-    servicoSelecionado = servico;
+  void selecionarServico(Servico servico) {
+    servicoSelecionado = servico.nome;
+    valorServicoSelecionado = servico.preco;
     notifyListeners();
   }
 }
@@ -240,6 +305,7 @@ class Horario {
   final String servico;
   final String nomeCliente;
   final String userId;
+  final double valorServico;
 
   Horario({
     required this.data,
@@ -247,6 +313,7 @@ class Horario {
     required this.servico,
     required this.nomeCliente,
     required this.userId,
+    required this.valorServico,
   });
 }
 

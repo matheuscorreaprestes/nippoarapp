@@ -74,12 +74,14 @@ class CustomDrawer extends StatelessWidget {
                       Divider(color: Colors.transparent),
                      // DrawerTile(Icons.calendar_today, "Agendar", pageController, 0),
                       DrawerTile(Icons.account_box, "Perfil", pageController, 1),
-                      DrawerTile(Icons.calendar_month, "Meus Compromissos", pageController, 0),
                       if (model.userType == 'client') ...[
+                        DrawerTile(Icons.calendar_month, "Meus Compromissos", pageController, 0),
                         DrawerTile(Icons.loyalty_outlined, "Pontos de fidelidade", pageController, 3),
                         DrawerTile(Icons.directions_car, "Gerenciar Automóvel", pageController, 2),
                       ] else if (model.userType == 'manager') ...[
                         DrawerTile(Icons.loyalty_outlined, "Gerenciar Fidelidade", pageController, 3),
+                        DrawerTile(Icons.price_change_outlined, "Gerenciar Serviços", pageController, 4),
+                        DrawerTile(Icons.calendar_month, "Agendamentos", pageController, 5),
                       ],
                       ListTile(
                         leading: Icon(Icons.logout),

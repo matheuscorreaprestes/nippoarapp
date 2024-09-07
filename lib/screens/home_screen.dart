@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:nippoarapp/screens/login_screen.dart';
+import 'package:nippoarapp/screens/commitments_screen_manager.dart';
 import 'package:nippoarapp/screens/loyalty_screen.dart';
 import 'package:nippoarapp/screens/commitments_screen.dart';
 import 'package:nippoarapp/screens/profile_screen.dart';
-import 'package:nippoarapp/screens/schedule_screen.dart';
 import 'package:nippoarapp/screens/vehicle_register_screen.dart';
-import 'package:nippoarapp/widgets/custom_drawer.dart';
+import 'package:nippoarapp/screens/servico_screen.dart';
+import 'package:nippoarapp/widgets/custom_drawer.dart'; // Importa o CustomDrawer correto
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -13,9 +13,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final PageController _pageController = PageController();
+  late final PageController _pageController;
 
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose(); // Certifique-se de descartar corretamente o PageController
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -47,9 +59,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ProfileScreen(),
           VehicleRegisterScreen(),
           LoyaltyScreen(),
+          GerenciarServicosScreen(),
+          CommitmentsScreenManager(),
         ],
       ),
-      drawer: CustomDrawer(pageController: _pageController),
+      drawer: CustomDrawer(pageController: _pageController,),
     );
   }
 }
