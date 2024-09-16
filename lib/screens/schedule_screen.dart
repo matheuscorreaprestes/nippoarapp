@@ -318,7 +318,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         }
       },
 
-      child: Text('Confirmar Agendamento'),
+      child: Text('Confirmar Agendamento',
+        style: TextStyle(
+          color: Colors.black,
+        ),
+      ),
     );
   }
 }

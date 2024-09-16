@@ -4,11 +4,13 @@ class Servico {
   String id; // ID do serviço, gerado automaticamente pelo banco de dados
   String nome; // Nome do serviço, ex: Lavagem Externa
   double preco; // Preço do serviço, ex: 50.0
+  String? promotionId;
 
   Servico({
     required this.id,
     required this.nome,
     required this.preco,
+    this.promotionId,
   });
 
   // Método para converter de e para o Firestore
@@ -17,6 +19,7 @@ class Servico {
       'id': id,
       'nome': nome,
       'preco': preco,
+      'promotionId': promotionId,
     };
   }
 
@@ -25,6 +28,7 @@ class Servico {
       id: map['id'] ?? '',
       nome: map['nome'] ?? '',
       preco: map['preco']?.toDouble() ?? 0.0,
+      promotionId: map['promotionId'],
     );
   }
 }

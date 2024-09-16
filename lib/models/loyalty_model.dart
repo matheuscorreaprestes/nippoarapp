@@ -10,10 +10,16 @@ class LoyaltyModel extends Model {
   int points = 0;
   bool isLoading = false;
 
+  // Novas propriedades para as regras de fidelidade
+  double valueSpent = 0.0; // Valor gasto para ganhar pontos
+  int pointsAwarded = 0;   // Quantidade de pontos concedida
+
   LoyaltyModel() {
     _loadCurrentUser();
+    _loadLoyaltyRules(); // Carregar regras de fidelidade
   }
 
+  // Método para carregar o usuário atual
   void _loadCurrentUser() async {
     firebaseUser = _auth.currentUser;
     if (firebaseUser != null) {
@@ -22,6 +28,7 @@ class LoyaltyModel extends Model {
     notifyListeners();
   }
 
+  // Método para carregar os pontos do cliente
   Future<void> _loadPoints() async {
     if (firebaseUser != null) {
       isLoading = true;
@@ -36,4 +43,42 @@ class LoyaltyModel extends Model {
     }
   }
 
+  // Método para carregar as regras de fidelidade do Firestore
+  Future<void> _loadLoyaltyRules() async {
+    DocumentSnapshot docRules = await _firestore.collection('loyalty_rules').doc('default').get();
+    if (docRules.exists) {
+      Map<String, dynamic> data = docRules.data() as Map<String, dynamic>;
+      valueSpent = data['valueSpent'] ?? 0.0;
+      pointsAwarded = data['pointsAwarded'] ?? 0;
+      notifyListeners();
+    }
+  }
+
+  // Método para atualizar as regras de fidelidade no Firestore
+  Future<void> updateLoyaltyRules(double value, int points) async {
+    valueSpent = value;
+    pointsAwarded = points;
+
+    await _firestore.collection('loyalty_rules').doc('default').set({
+      'valueSpent': valueSpent,
+      'pointsAwarded': pointsAwarded,
+    });
+    notifyListeners();
+  }
+
+  // Método para adicionar pontos ao cliente com base no valor gasto
+  Future<void> addPointsBasedOnSpent(double spentAmount) async {
+    if (valueSpent > 0) {
+      // Calcula a quantidade de pontos com base na regra de fidelidade
+      int additionalPoints = (spentAmount / valueSpent * pointsAwarded).floor();
+
+      points += additionalPoints;
+
+      // Atualiza os pontos do cliente no Firestore
+      await _firestore.collection('users').doc(firebaseUser!.uid).update({
+        'points': points,
+      });
+      notifyListeners();
+    }
+  }
 }

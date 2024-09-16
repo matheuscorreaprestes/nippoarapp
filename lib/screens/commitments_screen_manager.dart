@@ -40,6 +40,34 @@ class _CommitmentsScreenManagerState extends State<CommitmentsScreenManager> {
     });
   }
 
+  void _showConfirmationDialog(Horario horario, ScheduleModel scheduleModel) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmar Serviço'),
+          content: Text('Você realmente gostaria de confirmar que o serviço foi concluído?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Fecha o diálogo
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Fecha o diálogo
+                scheduleModel.confirmarAgendamento(horario, horario.userId); // Confirma o agendamento
+              },
+              child: Text('Confirmar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,12 +83,20 @@ class _CommitmentsScreenManagerState extends State<CommitmentsScreenManager> {
             children: [
               ElevatedButton(
                 onPressed: () => _onDateChanged(DateTime.now()),
-                child: Text('Hoje'),
+                child: Text('Hoje',
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
               ),
               SizedBox(width: 8),
               ElevatedButton(
                 onPressed: () => _onDateChanged(DateTime.now().add(Duration(days: 1))),
-                child: Text('Amanhã'),
+                child: Text('Amanhã',
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
               ),
               SizedBox(width: 8),
               ElevatedButton(
@@ -75,7 +111,11 @@ class _CommitmentsScreenManagerState extends State<CommitmentsScreenManager> {
                     _onDateChanged(pickedDate);
                   }
                 },
-                child: Text('Outro Dia'),
+                child: Text('Outro Dia',
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
               ),
             ],
           ),
@@ -107,6 +147,7 @@ class _CommitmentsScreenManagerState extends State<CommitmentsScreenManager> {
                           return HorarioCardManager(
                             horario: horario,
                             onCancelar: () => scheduleModel.cancelarAgendamento(horario, horario.userId),
+                            onConfirmar: () => _showConfirmationDialog(horario, scheduleModel), // Função para confirmar o agendamento
                           );
                         },
                       );

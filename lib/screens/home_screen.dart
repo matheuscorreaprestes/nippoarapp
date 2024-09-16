@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:nippoarapp/screens/commitments_screen_manager.dart';
+import 'package:nippoarapp/screens/manager_loyalty_screen.dart';
 import 'package:nippoarapp/screens/loyalty_screen.dart';
 import 'package:nippoarapp/screens/commitments_screen.dart';
 import 'package:nippoarapp/screens/profile_screen.dart';
+import 'package:nippoarapp/screens/promotion_screen.dart';
 import 'package:nippoarapp/screens/vehicle_register_screen.dart';
 import 'package:nippoarapp/screens/servico_screen.dart';
 import 'package:nippoarapp/widgets/custom_drawer.dart'; // Importa o CustomDrawer correto
@@ -58,9 +60,11 @@ class _HomeScreenState extends State<HomeScreen> {
           CommitmentsScreen(),
           ProfileScreen(),
           VehicleRegisterScreen(),
-          LoyaltyScreen(),
+          ClientLoyaltyScreen(),
           GerenciarServicosScreen(),
           CommitmentsScreenManager(),
+          PromotionManagerScreen(),
+          ManagerLoyaltyScreen(),
         ],
       ),
       drawer: CustomDrawer(pageController: _pageController,),

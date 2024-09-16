@@ -143,6 +143,8 @@ class ScheduleModel extends Model {
           minute: int.parse(partesHora[1]),
         );
 
+        bool isConcluido = (doc.get('status') ?? '') == 'finalizado';
+
         agendamentos.add(Horario(
           data: DateTime(
             dataSelecionada.year,
@@ -160,6 +162,7 @@ class ScheduleModel extends Model {
           nomeCliente: doc.get('nomeCliente') ?? 'Não especificado',
           userId: doc.get('userId') ?? 'Não especificado',
           valorServico: doc.get('valorServico') ?? 0.0,
+          isConcluido: isConcluido,
         ));
       }
 
@@ -170,6 +173,46 @@ class ScheduleModel extends Model {
       print('Erro ao carregar agendamentos para o gestor: $e');
     }
   }
+
+  Future<void> confirmarAgendamento(Horario horario, String userId) async {
+    try {
+      // Atualiza o status do agendamento na coleção do usuário
+      CollectionReference userAgendamentosRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('agendamentos');
+
+      QuerySnapshot userAgendamentosSnapshot = await userAgendamentosRef
+          .where('data', isEqualTo: DateFormat('yyyyMMdd').format(horario.data))
+          .where('hora', isEqualTo: '${horario.data.hour.toString().padLeft(2, '0')}:${horario.data.minute.toString().padLeft(2, '0')}')
+          .get();
+
+      if (userAgendamentosSnapshot.docs.isNotEmpty) {
+        await userAgendamentosSnapshot.docs.first.reference.update({'status': 'finalizado'});
+      }
+
+      // Atualiza o status na coleção geral
+      String dataFormatada = DateFormat('yyyyMMdd').format(horario.data);
+      CollectionReference subcolecao = _firestore
+          .collection('agendamentos')
+          .doc(dataFormatada)
+          .collection('horarios');
+
+      QuerySnapshot snapshot = await subcolecao
+          .where('hora', isEqualTo: '${horario.data.hour.toString().padLeft(2, '0')}:${horario.data.minute.toString().padLeft(2, '0')}')
+          .where('userId', isEqualTo: horario.userId)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        await snapshot.docs.first.reference.update({'status': 'finalizado'});
+        horario.isConcluido = true;
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Erro ao confirmar agendamento: $e');
+    }
+  }
+
 
 
   Future<void> adicionarAgendamento(Horario horario, String nomeCliente, String userId) async {
@@ -190,7 +233,7 @@ class ScheduleModel extends Model {
         'servico': horario.servico,
         'valorServico': horario.valorServico,
         'nomeCliente': nomeCliente,
-        'status': 'confirmado',
+        'status': 'andamento',
         'userId': userId,
       });
 
@@ -306,6 +349,7 @@ class Horario {
   final String nomeCliente;
   final String userId;
   final double valorServico;
+  bool isConcluido;
 
   Horario({
     required this.data,
@@ -314,6 +358,7 @@ class Horario {
     required this.nomeCliente,
     required this.userId,
     required this.valorServico,
+    this.isConcluido = false,
   });
 }
 
@@ -329,7 +374,7 @@ class Veiculo {
   });
 
   @override
-  bool operator ==(Object other) =>
+  bool operator == (Object other) =>
       identical(this, other) ||
           other is Veiculo &&
               runtimeType == other.runtimeType &&
