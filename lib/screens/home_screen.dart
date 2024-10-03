@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nippoarapp/screens/caixa_screen.dart';
 import 'package:nippoarapp/screens/commitments_screen_manager.dart';
 import 'package:nippoarapp/screens/manager_loyalty_screen.dart';
 import 'package:nippoarapp/screens/loyalty_screen.dart';
@@ -65,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
           CommitmentsScreenManager(),
           PromotionManagerScreen(),
           ManagerLoyaltyScreen(),
+          CaixaScreen(),
         ],
       ),
       drawer: CustomDrawer(pageController: _pageController,),

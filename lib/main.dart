@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nippoarapp/models/caixa_model.dart';
 import 'package:nippoarapp/models/loyalty_model.dart';
 import 'package:nippoarapp/models/promotion_model.dart';
 import 'package:nippoarapp/models/schedule_model.dart';
@@ -37,18 +38,21 @@ class MyApp extends StatelessWidget{
       model: ScheduleModel(),
       child: ScopedModel<PromotionModel>(
       model: PromotionModel(),
+      child: ScopedModel<RegistroCaixaModel>(
+      model: RegistroCaixaModel(),
       child: MaterialApp(
-            title: "Nippoar",
-            theme: ThemeData(
+             title: "Nippoar",
+             theme: ThemeData(
                 elevatedButtonTheme: ElevatedButtonThemeData(
                   style: ElevatedButton.styleFrom(backgroundColor: Color.fromARGB(255, 196, 47, 47),
                   ),
                 ),
                 primarySwatch: Colors.red,
                 primaryColor: Color.fromARGB(255, 196, 47, 47)
-            ),
-           debugShowCheckedModeBanner: false,
-           home: LoginScreen()
+             ),
+            debugShowCheckedModeBanner: false,
+            home: LoginScreen()
+           ),
           ),
          ),
         ),

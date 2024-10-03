@@ -83,6 +83,7 @@ class CustomDrawer extends StatelessWidget {
                         DrawerTile(Icons.price_change_outlined, "Gerenciar Serviços", pageController, 4),
                         DrawerTile(Icons.calendar_month, "Agendamentos", pageController, 5),
                         DrawerTile(Icons.price_check_outlined, "Promoções", pageController, 6),
+                        DrawerTile(Icons.rate_review_outlined, "Caixa", pageController, 8)
                       ],
                       ListTile(
                         leading: Icon(Icons.logout),
