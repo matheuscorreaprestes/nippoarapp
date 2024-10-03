@@ -98,7 +98,7 @@ class HorarioCardManager extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     // Adicionar lógica para confirmar o serviço
-                    _finalizarServico(context, horario.valorServico, horario.userId);
+                    _finalizarServico(context, horario.valorServico, horario.userId, horario.veiculo.modelo, horario.veiculo.placa, horario.servico);
                   },
                   icon: Icon(Icons.check, color: Colors.white),
                   label: Text(
@@ -135,8 +135,14 @@ class HorarioCardManager extends StatelessWidget {
     );
   }
 
-  // Método para finalizar o serviço e adicionar pontos ao cliente
-  void _finalizarServico(BuildContext context, double valorServico, String userId) async {
+  void _finalizarServico(
+      BuildContext context,
+      double valorServico,
+      String userId,
+      String modeloVeiculo,
+      String placaVeiculo,
+      String tipoServico) async {
+
     try {
       // Obter as regras de fidelidade atuais para calcular os pontos
       DocumentSnapshot loyaltyDoc = await FirebaseFirestore.instance
@@ -161,11 +167,29 @@ class HorarioCardManager extends StatelessWidget {
         }
       });
 
+      // Salvar as informações do serviço concluído no Firestore
+      await FirebaseFirestore.instance.collection('servicos_concluidos').add({
+        'descricao': tipoServico,
+        'modelo_veiculo': modeloVeiculo,
+        'placa_veiculo': placaVeiculo,
+        'valor': valorServico,
+        'data': DateTime.now(),
+      });
+
       // Confirmar o serviço
       onConfirmar();
+
+      // Exibir mensagem de sucesso ao gestor
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Serviço finalizado e informações adicionadas com sucesso!')),
+      );
     } catch (e) {
-      print('Erro ao adicionar pontos de fidelidade: $e');
-      // Você pode adicionar uma lógica para exibir um alerta ou mensagem de erro para o usuário
+      print('Erro ao finalizar o serviço e adicionar pontos de fidelidade: $e');
+      // Exibir uma mensagem de erro para o gestor
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao finalizar o serviço: $e')),
+      );
     }
   }
+
 }
