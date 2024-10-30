@@ -26,7 +26,14 @@ class _GerenciarServicosScreenState extends State<GerenciarServicosScreen> {
               final servico = servicos[index];
               return ListTile(
                 title: Text(servico.nome),
-                subtitle: Text('R\$ ${servico.preco.toStringAsFixed(2)}'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Baixo: R\$ ${servico.precoBaixo.toStringAsFixed(2)}'),
+                    Text('Médio: R\$ ${servico.precoMedio.toStringAsFixed(2)}'),
+                    Text('Alto: R\$ ${servico.precoAlto.toStringAsFixed(2)}'),
+                  ],
+                ),
                 trailing: IconButton(
                   icon: Icon(Icons.delete),
                   onPressed: () => removerServico(servico.id),
@@ -52,7 +59,9 @@ class _GerenciarServicosScreenState extends State<GerenciarServicosScreen> {
 
   void _mostrarDialogoAdicionarServico() {
     final nomeController = TextEditingController();
-    final precoController = TextEditingController();
+    final precoBaixoController = TextEditingController();
+    final precoMedioController = TextEditingController();
+    final precoAltoController = TextEditingController();
 
     showDialog(
       context: context,
@@ -66,8 +75,18 @@ class _GerenciarServicosScreenState extends State<GerenciarServicosScreen> {
               decoration: InputDecoration(labelText: 'Nome do Serviço'),
             ),
             TextField(
-              controller: precoController,
-              decoration: InputDecoration(labelText: 'Preço do Serviço'),
+              controller: precoBaixoController,
+              decoration: InputDecoration(labelText: 'Preço para carro Baixo'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: precoMedioController,
+              decoration: InputDecoration(labelText: 'Preço para carro Médio'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: precoAltoController,
+              decoration: InputDecoration(labelText: 'Preço para carro Alto'),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -80,8 +99,18 @@ class _GerenciarServicosScreenState extends State<GerenciarServicosScreen> {
           ElevatedButton(
             onPressed: () {
               final nome = nomeController.text;
-              final preco = double.tryParse(precoController.text) ?? 0.0;
-              final servico = Servico(id: '', nome: nome, preco: preco);
+              final precoBaixo = double.tryParse(precoBaixoController.text) ?? 0.0;
+              final precoMedio = double.tryParse(precoMedioController.text) ?? 0.0;
+              final precoAlto = double.tryParse(precoAltoController.text) ?? 0.0;
+
+              final servico = Servico(
+                id: '',
+                nome: nome,
+                precoBaixo: precoBaixo,
+                precoMedio: precoMedio,
+                precoAlto: precoAlto,
+                clienteToken: '',
+              );
               adicionarServico(servico);
               Navigator.of(context).pop();
             },
@@ -94,7 +123,9 @@ class _GerenciarServicosScreenState extends State<GerenciarServicosScreen> {
 
   void _mostrarDialogoEditarServico(Servico servico) {
     final nomeController = TextEditingController(text: servico.nome);
-    final precoController = TextEditingController(text: servico.preco.toString());
+    final precoBaixoController = TextEditingController(text: servico.precoBaixo.toString());
+    final precoMedioController = TextEditingController(text: servico.precoMedio.toString());
+    final precoAltoController = TextEditingController(text: servico.precoAlto.toString());
 
     showDialog(
       context: context,
@@ -108,8 +139,18 @@ class _GerenciarServicosScreenState extends State<GerenciarServicosScreen> {
               decoration: InputDecoration(labelText: 'Nome do Serviço'),
             ),
             TextField(
-              controller: precoController,
-              decoration: InputDecoration(labelText: 'Preço do Serviço'),
+              controller: precoBaixoController,
+              decoration: InputDecoration(labelText: 'Preço para carro Baixo'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: precoMedioController,
+              decoration: InputDecoration(labelText: 'Preço para carro Médio'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: precoAltoController,
+              decoration: InputDecoration(labelText: 'Preço para carro Alto'),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -122,9 +163,14 @@ class _GerenciarServicosScreenState extends State<GerenciarServicosScreen> {
           ElevatedButton(
             onPressed: () {
               final nome = nomeController.text;
-              final preco = double.tryParse(precoController.text) ?? 0.0;
+              final precoBaixo = double.tryParse(precoBaixoController.text) ?? 0.0;
+              final precoMedio = double.tryParse(precoMedioController.text) ?? 0.0;
+              final precoAlto = double.tryParse(precoAltoController.text) ?? 0.0;
+
               servico.nome = nome;
-              servico.preco = preco;
+              servico.precoBaixo = precoBaixo;
+              servico.precoMedio = precoMedio;
+              servico.precoAlto = precoAlto;
               editarServico(servico);
               Navigator.of(context).pop();
             },

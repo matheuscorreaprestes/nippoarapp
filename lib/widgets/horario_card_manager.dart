@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:nippoarapp/services/notification_service.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:nippoarapp/models/schedule_model.dart';
 import 'package:nippoarapp/models/loyalty_model.dart';
@@ -141,31 +142,60 @@ class HorarioCardManager extends StatelessWidget {
       String userId,
       String modeloVeiculo,
       String placaVeiculo,
-      String tipoServico) async {
-
+      String tipoServico,
+      ) async {
     try {
-      // Obter as regras de fidelidade atuais para calcular os pontos
-      DocumentSnapshot loyaltyDoc = await FirebaseFirestore.instance
-          .collection('loyalty_rules')
-          .doc('default')
-          .get();
+      // Obtém o documento do cliente
+      DocumentSnapshot clienteSnapshot = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      Map<String, dynamic>? clienteData = clienteSnapshot.data() as Map<String, dynamic>?;
 
-      int pontosPorValor = loyaltyDoc['pointsAwarded'] ?? 0;
-      double valorParaPontos = loyaltyDoc['valueSpent'] ?? 0;
+      // Verifica se o campo 'token' existe no documento do cliente
+      if (clienteData != null && clienteData.containsKey('token')) {
+        String? clienteToken = clienteData['token'];
 
-      // Calcular os pontos a adicionar com base no valor gasto
-      int pontosAdicionar = (valorServico / valorParaPontos).floor() * pontosPorValor;
-
-      // Atualizar os pontos no documento do cliente
-      DocumentReference clienteRef = FirebaseFirestore.instance.collection('users').doc(userId);
-      FirebaseFirestore.instance.runTransaction((transaction) async {
-        DocumentSnapshot snapshot = await transaction.get(clienteRef);
-
-        if (snapshot.exists) {
-          int pontosAtuais = snapshot['points'] ?? 0;
-          transaction.update(clienteRef, {'points': pontosAtuais + pontosAdicionar});
+        if (clienteToken != null) {
+          // Envia a notificação para o cliente
+          await enviarNotificacaoParaCliente(
+            clienteToken,
+            'Serviço Concluído',
+            'Seu veículo está pronto para ser retirado!',
+          );
+        } else {
+          print('Cliente não possui token de notificação');
         }
-      });
+      } else {
+        print('Documento do cliente não existe ou não contém o campo "token".');
+      }
+
+      // Obtém as regras de fidelidade atuais para calcular os pontos
+      DocumentSnapshot loyaltyDoc = await FirebaseFirestore.instance.collection('loyalty_rules').doc('default').get();
+      Map<String, dynamic>? loyaltyData = loyaltyDoc.data() as Map<String, dynamic>?;
+
+      if (loyaltyData != null) {
+        // Verifica se os campos 'pointsAwarded' e 'valueSpent' existem no documento de regras
+        int pontosPorValor = loyaltyData.containsKey('pointsAwarded') ? loyaltyData['pointsAwarded'] : 0;
+        double valorParaPontos = loyaltyData.containsKey('valueSpent') ? loyaltyData['valueSpent'] : 0;
+
+        // Calcula os pontos a adicionar com base no valor gasto
+        int pontosAdicionar = (valorServico / valorParaPontos).floor() * pontosPorValor;
+
+        // Atualiza os pontos no documento do cliente
+        DocumentReference clienteRef = FirebaseFirestore.instance.collection('users').doc(userId);
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          DocumentSnapshot snapshot = await transaction.get(clienteRef);
+          Map<String, dynamic>? clienteDataTrans = snapshot.data() as Map<String, dynamic>?;
+
+          if (clienteDataTrans != null) {
+            // Verifica se o campo 'points' existe no documento do cliente
+            int pontosAtuais = clienteDataTrans.containsKey('points') ? clienteDataTrans['points'] : 0;
+            transaction.update(clienteRef, {'points': pontosAtuais + pontosAdicionar});
+          } else {
+            print('Documento do cliente não existe.');
+          }
+        });
+      } else {
+        print('Documento de regras de fidelidade não encontrado.');
+      }
 
       // Salvar as informações do serviço concluído no Firestore
       await FirebaseFirestore.instance.collection('servicos_concluidos').add({
@@ -176,7 +206,7 @@ class HorarioCardManager extends StatelessWidget {
         'data': DateTime.now(),
       });
 
-      // Confirmar o serviço
+      // Confirmação de que o serviço foi concluído
       onConfirmar();
 
       // Exibir mensagem de sucesso ao gestor
@@ -191,5 +221,7 @@ class HorarioCardManager extends StatelessWidget {
       );
     }
   }
+
+
 
 }

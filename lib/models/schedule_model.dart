@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -51,6 +49,7 @@ class ScheduleModel extends Model {
             marca: doc.get('veiculo.marca') ?? 'Desconhecida',
             modelo: doc.get('veiculo.modelo') ?? 'Desconhecido',
             placa: doc.get('veiculo.placa') ?? 'Desconhecida',
+            categoria: doc.get('veiculo.categoria') ?? 'Desconhecida',
           ),
           servico: doc.get('servico') ?? 'Não especificado',
           nomeCliente: doc.get('nomeCliente') ?? 'Não especificado',
@@ -157,6 +156,7 @@ class ScheduleModel extends Model {
             marca: doc.get('veiculo.marca') ?? 'Desconhecida',
             modelo: doc.get('veiculo.modelo') ?? 'Desconhecido',
             placa: doc.get('veiculo.placa') ?? 'Desconhecida',
+            categoria: doc.get('veiculo.categoria') ?? 'Desconhecida',
           ),
           servico: doc.get('servico') ?? 'Não especificado',
           nomeCliente: doc.get('nomeCliente') ?? 'Não especificado',
@@ -274,7 +274,7 @@ class ScheduleModel extends Model {
           .collection('agendamentos');
 
       QuerySnapshot userAgendamentosSnapshot = await userAgendamentosRef
-          .where('data', isEqualTo: DateFormat('yyyy-MM-dd').format(horario.data))
+          .where('data', isEqualTo: DateFormat('yyyyMMdd').format(horario.data))
           .where('hora', isEqualTo: '${horario.data.hour.toString().padLeft(2, '0')}:${horario.data.minute.toString().padLeft(2, '0')}')
           .get();
 
@@ -335,9 +335,15 @@ class ScheduleModel extends Model {
     notifyListeners();
   }
 
-  void selecionarServico(Servico servico) {
+  void selecionarServico(Servico servico, String categoriaCarro) {
     servicoSelecionado = servico.nome;
-    valorServicoSelecionado = servico.preco;
+    if (categoriaCarro == "baixo") {
+      valorServicoSelecionado = servico.precoBaixo;
+    } else if (categoriaCarro == "medio") {
+      valorServicoSelecionado = servico.precoMedio;
+    } else if (categoriaCarro == "alto") {
+      valorServicoSelecionado = servico.precoAlto;
+    }
     notifyListeners();
   }
 }
@@ -366,11 +372,13 @@ class Veiculo {
   final String marca;
   final String modelo;
   final String placa;
+  String categoria;
 
   Veiculo({
     required this.marca,
     required this.modelo,
     required this.placa,
+    required this.categoria,
   });
 
   @override
@@ -380,7 +388,8 @@ class Veiculo {
               runtimeType == other.runtimeType &&
               marca == other.marca &&
               modelo == other.modelo &&
-              placa == other.placa;
+              placa == other.placa &&
+              categoria == other.categoria;
 
   @override
   int get hashCode => marca.hashCode ^ modelo.hashCode ^ placa.hashCode;

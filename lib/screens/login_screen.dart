@@ -3,11 +3,33 @@ import 'package:nippoarapp/models/user_model.dart';
 import 'package:nippoarapp/screens/home_screen.dart';
 import 'package:nippoarapp/screens/register_screen.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
+
+  // Função para obter e salvar o token FCM no Firestore
+  Future<void> obterETestarToken(String userId) async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // Obtenha o token atual do dispositivo
+    String? token = await messaging.getToken();
+
+    if (token != null) {
+      // Exiba o token no console para testes
+      print('Token de notificação: $token');
+
+      // Salve o token no Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'token': token,
+      });
+    } else {
+      print('Falha ao obter o token.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,17 +68,20 @@ class LoginScreen extends StatelessWidget {
                         children: [
                           TextFormField(
                             controller: _emailController,
-                            decoration: InputDecoration(hintText: "E-mail"),
+                            decoration:
+                            InputDecoration(hintText: "E-mail"),
                             keyboardType: TextInputType.emailAddress,
                             validator: (text) {
-                              if (text!.isEmpty || !text.contains("@"))
+                              if (text!.isEmpty ||
+                                  !text.contains("@"))
                                 return "E-mail inválido";
                             },
                           ),
                           SizedBox(height: 16.0),
                           TextFormField(
                             controller: _passController,
-                            decoration: InputDecoration(hintText: "Senha"),
+                            decoration:
+                            InputDecoration(hintText: "Senha"),
                             obscureText: true,
                             validator: (text) {
                               if (text!.isEmpty || text.length < 6)
@@ -68,7 +93,8 @@ class LoginScreen extends StatelessWidget {
                             child: TextButton(
                               onPressed: () {
                                 if (_emailController.text.isEmpty)
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
                                     SnackBar(
                                       content: Text(
                                           "Insira seu e-mail para recuperação!"),
@@ -77,12 +103,16 @@ class LoginScreen extends StatelessWidget {
                                     ),
                                   );
                                 else {
-                                  model.recoverPass(_emailController.text);
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                  model.recoverPass(
+                                      _emailController.text);
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
                                     SnackBar(
-                                      content: Text("Confira seu e-mail!"),
+                                      content:
+                                      Text("Confira seu e-mail!"),
                                       backgroundColor:
-                                      Theme.of(context).primaryColor,
+                                      Theme.of(context)
+                                          .primaryColor,
                                       duration: Duration(seconds: 2),
                                     ),
                                   );
@@ -107,8 +137,7 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        minimumSize:
-                        Size(200, 50), // Largura infinita e altura 50
+                        minimumSize: Size(200, 50), // Largura e altura
                       ),
                       child: Text(
                         "Entrar",
@@ -122,10 +151,18 @@ class LoginScreen extends StatelessWidget {
                           model.signIn(
                             email: _emailController.text,
                             pass: _passController.text,
-                            onSuccess: () {
+                            onSuccess: () async {
+                              // Obtém o userId do modelo
+                              final userId = model.firebaseUser!.uid;
+
+                              // Obter e salvar o token FCM
+                              await obterETestarToken(userId);
+
+                              // Navegar para a HomeScreen
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
-                                    builder: (context) => HomeScreen()),
+                                    builder: (context) =>
+                                        HomeScreen()),
                               );
                             },
                             onFail: () {
@@ -152,7 +189,8 @@ class LoginScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) => RegisterScreen()),
+                              builder: (context) =>
+                                  RegisterScreen()),
                         );
                       },
                     ),

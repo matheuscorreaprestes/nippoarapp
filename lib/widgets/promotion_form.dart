@@ -39,10 +39,11 @@ class _PromotionFormState extends State<PromotionForm> {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       widget.onSave(Promotion(
+        id: '', // Ou algum ID se você estiver editando
         name: _name,
+        discount: _discount,
         startDate: _startDate,
         endDate: _endDate,
-        discount: _discount, id: '',
       ));
     }
   }

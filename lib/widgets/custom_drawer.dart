@@ -74,6 +74,7 @@ class CustomDrawer extends StatelessWidget {
                       Divider(color: Colors.transparent),
                      // DrawerTile(Icons.calendar_today, "Agendar", pageController, 0),
                       DrawerTile(Icons.account_box, "Perfil", pageController, 1),
+                      DrawerTile(Icons.catching_pokemon_rounded, "Popular", pageController, 9),
                       if (model.userType == 'client') ...[
                         DrawerTile(Icons.calendar_month, "Meus Compromissos", pageController, 0),
                         DrawerTile(Icons.loyalty_outlined, "Pontos de fidelidade", pageController, 3),

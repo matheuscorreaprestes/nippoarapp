@@ -27,6 +27,16 @@ class ManagerLoyaltyScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.black),
               ),
             ),
+            SizedBox(height: 20.0),
+            ElevatedButton(
+              onPressed: () {
+                _showEditPointValueDialog(context);  // Novo botão para definir valor dos pontos
+              },
+              child: Text(
+                "Definir Valor dos Pontos",
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
           ],
         ),
       ),
@@ -81,6 +91,41 @@ class ManagerLoyaltyScreen extends StatelessWidget {
     );
   }
 
+  void _showEditPointValueDialog(BuildContext context) {
+    final _pointsValueController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Definir Valor dos Pontos"),
+          content: TextField(
+            controller: _pointsValueController,
+            decoration: InputDecoration(
+              labelText: "Pontos por R\$",
+            ),
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () {
+                _updatePointValue(_pointsValueController.text);
+                Navigator.of(context).pop();
+              },
+              child: Text("Salvar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _updateLoyaltyRules(String value, String points) {
     double valueSpent = double.tryParse(value) ?? 0.0;
     int pointsAwarded = int.tryParse(points) ?? 0;
@@ -88,6 +133,21 @@ class ManagerLoyaltyScreen extends StatelessWidget {
     FirebaseFirestore.instance
         .collection('loyalty_rules')
         .doc('default')
-        .set({'valueSpent': valueSpent, 'pointsAwarded': pointsAwarded});
+        .set({
+      'valueSpent': valueSpent,
+      'pointsAwarded': pointsAwarded,
+    });
+  }
+
+  void _updatePointValue(String pointsValue) {
+    double pointValue = double.tryParse(pointsValue) ?? 0.0;
+
+    FirebaseFirestore.instance
+        .collection('loyalty_rules')
+        .doc('default')
+        .set({
+      'pointValue': pointValue,  // Adicionando a regra de valor dos pontos
+    }, SetOptions(merge: true));
   }
 }
+

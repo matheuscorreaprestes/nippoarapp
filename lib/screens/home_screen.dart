@@ -4,6 +4,7 @@ import 'package:nippoarapp/screens/commitments_screen_manager.dart';
 import 'package:nippoarapp/screens/manager_loyalty_screen.dart';
 import 'package:nippoarapp/screens/loyalty_screen.dart';
 import 'package:nippoarapp/screens/commitments_screen.dart';
+import 'package:nippoarapp/screens/populationdatabasescreen.dart';
 import 'package:nippoarapp/screens/profile_screen.dart';
 import 'package:nippoarapp/screens/promotion_screen.dart';
 import 'package:nippoarapp/screens/vehicle_register_screen.dart';
@@ -67,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
           PromotionManagerScreen(),
           ManagerLoyaltyScreen(),
           CaixaScreen(),
+          PopulateDatabaseScreen(),
         ],
       ),
       drawer: CustomDrawer(pageController: _pageController,),

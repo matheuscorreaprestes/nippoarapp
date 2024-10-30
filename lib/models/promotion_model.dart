@@ -2,26 +2,26 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:scoped_model/scoped_model.dart';
 
 class Promotion {
-  String id;
-  String name;
-  DateTime startDate;
-  DateTime endDate;
-  double discount;
+  String id; // ID da promoção
+  String name; // Nome da promoção
+  double discount; // Desconto da promoção
+  DateTime startDate; // Data de início da promoção
+  DateTime endDate; // Data de término da promoção
 
   Promotion({
     required this.id,
     required this.name,
+    required this.discount,
     required this.startDate,
     required this.endDate,
-    required this.discount,
   });
 
   // Converte o objeto para um Map para salvar no Firestore
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'startDate': Timestamp.fromDate(startDate), // Salva como Timestamp
       'endDate': Timestamp.fromDate(endDate), // Salva como Timestamp
+      'startDate': Timestamp.fromDate(startDate), // Salva como Timestamp
       'discount': discount,
     };
   }
@@ -31,9 +31,9 @@ class Promotion {
     return Promotion(
       id: doc.id,
       name: doc['name'],
-      startDate: (doc['startDate'] as Timestamp).toDate(),
+      discount: (doc['discount'] as num).toDouble(), // Garantir que o desconto seja double
+      startDate: (doc['startDate'] as Timestamp).toDate(), // Convertendo startDate
       endDate: (doc['endDate'] as Timestamp).toDate(),
-      discount: doc['discount'].toDouble(),
     );
   }
 }
@@ -53,7 +53,7 @@ class PromotionModel extends Model {
     }
   }
 
-  // Adicionar uma nova promoção
+  // Adicionar uma nova promoção sem servicoId
   Future<void> addPromotion(Promotion promotion) async {
     try {
       final docRef = await _firestore.collection('promotions').add(promotion.toMap());
@@ -90,16 +90,19 @@ class PromotionModel extends Model {
     }
   }
 
-  // Função para buscar a promoção associada a um serviço específico
-  Future<Promotion?> buscarPromocaoDoServico(String servicoId) async {
+  // Função para buscar promoções ativas em um dia específico
+  Future<Promotion?> buscarPromocaoParaData(DateTime dataEscolhida) async {
     try {
-      final snapshot = await _firestore
-          .collection('promotions')
-          .where('servicoId', isEqualTo: servicoId)
-          .get();
+      final querySnapshot = await _firestore.collection('promotions').get();
+      final List<Promotion> allPromotions = querySnapshot.docs
+          .map((doc) => Promotion.fromDocument(doc))
+          .where((promotion) =>
+      promotion.startDate.isBefore(dataEscolhida) &&
+          promotion.endDate.isAfter(dataEscolhida))
+          .toList();
 
-      if (snapshot.docs.isNotEmpty) {
-        return Promotion.fromDocument(snapshot.docs.first); // Corrigido para Promotion
+      if (allPromotions.isNotEmpty) {
+        return allPromotions.first; // Retorna a primeira promoção ativa encontrada
       }
     } catch (e) {
       print('Erro ao buscar promoção: $e');

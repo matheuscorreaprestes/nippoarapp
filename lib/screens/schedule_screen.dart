@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:nippoarapp/models/servico_model.dart';
 import 'package:nippoarapp/models/user_model.dart';
@@ -12,6 +13,9 @@ class ScheduleScreen extends StatefulWidget {
   @override
   _ScheduleScreenState createState() => _ScheduleScreenState();
 }
+
+final String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
 
 extension DateTimeExtensions on DateTime {
   bool isSameDate(DateTime other) {
@@ -69,6 +73,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   marca: doc['marca'],
                   modelo: doc['modelo'],
                   placa: doc['placa'],
+                  categoria: doc['categoria'],
                 );
               }).toList();
 
@@ -229,23 +234,41 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget _selecionarServico(BuildContext context, ScheduleModel model) {
     return ElevatedButton(
       onPressed: () {
+        if (model.veiculoSelecionado == null) {
+          // Verificar se um veículo foi selecionado antes de permitir a seleção de serviços
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Selecione um veículo antes de escolher o serviço.')),
+          );
+          return;
+        }
+
         showDialog(
           context: context,
           builder: (context) => ServicoSelectionDialog(
-            onServicoSelected: (Servico servico) {
-              model.selecionarServico(servico);
-            },
+            userId: userId,
+            onServicoSelected: (Servico servico, double valorServico) {
+              // Verifique se o veículo está selecionado e obtenha a categoria
+              String categoriaCarro = model.veiculoSelecionado?.categoria ?? 'baixo'; // Verifique se 'categoria' existe
+
+              // Calcular o valor do serviço com base na categoria do carro
+              double valorServico = servico.getPrecoPorCategoria(categoriaCarro);
+
+              // Salvar o serviço selecionado e o valor
+              model.selecionarServico(servico, categoriaCarro);
+              model.valorServicoSelecionado = valorServico;
+            }, categoriaCarro: '',
+
           ),
         );
       },
       child: Text(
         'Selecionar Serviço',
-        style: TextStyle(
-          color: Colors.black,
-        ),
+        style: TextStyle(color: Colors.black),
       ),
     );
   }
+
+
 
 
 

@@ -3,6 +3,7 @@ import 'package:scoped_model/scoped_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:nippoarapp/models/vehicle_model.dart';
 import 'package:nippoarapp/models/user_model.dart';
+import 'package:nippoarapp/widgets/vehicle_card.dart';
 
 class VehicleRegisterScreen extends StatefulWidget {
   const VehicleRegisterScreen({super.key});
@@ -16,8 +17,13 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
   final _modeloController = TextEditingController();
   final _corController = TextEditingController();
   final _placaController = TextEditingController();
-
+  final _outroModeloController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  String? _selectedMarca;
+  String? _selectedModelo;
+  bool _isOutroModelo = false; // Para controlar se "Outro" foi selecionado
+  String? _selectedCategoria;
 
   @override
   Widget build(BuildContext context) {
@@ -35,70 +41,28 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
               return FutureBuilder<QuerySnapshot>(
                 future: vehicleModel.getVehicles(),
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (!snapshot.hasData) {
                     return Center(child: CircularProgressIndicator());
                   }
 
-                  if (snapshot.hasError) {
-                    return Center(child: Text("Erro ao carregar veículos"));
-                  }
+                  // Gerando a lista de VehicleCard
+                  List<Widget> vehicleCards = snapshot.data!.docs.map((doc) {
+                    Map<String, dynamic> vehicleData = doc.data() as Map<String, dynamic>;
 
-                  List<Widget> vehicleCards = [];
-
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    vehicleCards.add(
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            "${userModel.userData['name'] ?? 'Usuário'}, você ainda não tem veículo cadastrado, cadastre um para agendar um horário",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16.0,
-                            ),
-                          ),
-                        ),
-                      ),
+                    return VehicleCard(
+                      marca: vehicleData['marca'],
+                      modelo: vehicleData['modelo'],
+                      cor: vehicleData['cor'],
+                      placa: vehicleData['placa'],
+                      vehicleId: doc.id,
                     );
-                  } else {
-                    vehicleCards = snapshot.data!.docs.map((doc) {
-                      Map<String, dynamic> vehicleData = doc.data() as Map<String, dynamic>;
-                      return Card(
-                        child: ListTile(
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("${vehicleData['marca']} ${vehicleData['modelo']}"),
-                              PopupMenuButton<String>(
-                                onSelected: (String value) {
-                                  if (value == 'edit') {
-                                    _showVehicleEditForm(context, vehicleModel, doc.id, vehicleData);
-                                  } else if (value == 'delete') {
-                                    _deleteVehicle(context, vehicleModel, doc.id);
-                                  }
-                                },
-                                itemBuilder: (BuildContext context) {
-                                  return {'Editar', 'Deletar'}.map((String choice) {
-                                    return PopupMenuItem<String>(
-                                      value: choice == 'Editar' ? 'edit' : 'delete',
-                                      child: Text(choice),
-                                    );
-                                  }).toList();
-                                },
-                              ),
-                            ],
-                          ),
-                          subtitle: Text("Cor: ${vehicleData['cor']}\nPlaca: ${vehicleData['placa']}"),
-                        ),
-                      );
-                    }).toList();
-                  }
+                  }).toList();
 
                   return Stack(
                     children: [
                       ListView(
                         padding: EdgeInsets.all(16.0),
-                        children: vehicleCards,
+                        children: vehicleCards, // Passando a lista de VehicleCard aqui
                       ),
                       Positioned(
                         bottom: 16.0,
@@ -107,10 +71,7 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
                         child: ElevatedButton(
                           child: Text(
                             "Cadastrar Veículo",
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.black,
-                            ),
+                            style: TextStyle(fontSize: 18.0, color: Colors.black),
                           ),
                           onPressed: () {
                             _showVehicleRegistrationForm(context, vehicleModel);
@@ -133,6 +94,9 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
     _modeloController.clear();
     _corController.clear();
     _placaController.clear();
+    _outroModeloController.clear();
+    _isOutroModelo = false; // Resetar estado
+    _selectedCategoria = null; // Resetar categoria
 
     showModalBottomSheet(
       context: context,
@@ -149,61 +113,134 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              TextFormField(
-                controller: _marcaController,
-                decoration: InputDecoration(
-                  hintText: "Marca",
-                ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
+              // Campo Marca
+              FutureBuilder<QuerySnapshot>(
+                future: FirebaseFirestore.instance.collection('cars').get(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return CircularProgressIndicator();
+                  List<DropdownMenuItem<String>> marcas = snapshot.data!.docs.map((doc) {
+                    return DropdownMenuItem<String>(
+                      value: doc.id,
+                      child: Text(doc.id),
+                    );
+                  }).toList();
+
+                  return DropdownButtonFormField<String>(
+                    value: _selectedMarca,
+                    items: marcas,
+                    hint: Text('Selecione a Marca'),
+                    onChanged: (marca) {
+                      setState(() {
+                        _selectedMarca = marca;
+                        _selectedModelo = null; // Resetar o modelo
+                        _isOutroModelo = false;
+                        _selectedCategoria = null; // Resetar a categoria
+                      });
+                    },
+                    validator: (value) => value == null ? 'Selecione uma marca' : null,
+                  );
                 },
               ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                controller: _modeloController,
-                decoration: InputDecoration(
-                  hintText: "Modelo",
+
+              // Campo Modelo
+              if (_selectedMarca != null)
+                FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('cars')
+                      .doc(_selectedMarca)
+                      .collection('modelos')
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return CircularProgressIndicator();
+                    List<DropdownMenuItem<String>> modelos = snapshot.data!.docs.map((doc) {
+                      return DropdownMenuItem<String>(
+                        value: doc.id,
+                        child: Text(doc.id),
+                      );
+                    }).toList();
+
+                    // Adiciona opção "Outro"
+                    modelos.add(
+                      DropdownMenuItem<String>(
+                        value: 'Outro',
+                        child: Text('Outro'),
+                      ),
+                    );
+
+                    return DropdownButtonFormField<String>(
+                      value: _selectedModelo,
+                      items: modelos,
+                      hint: Text('Selecione o Modelo'),
+                      onChanged: (modelo) {
+                        setState(() {
+                          _selectedModelo = modelo;
+                          _isOutroModelo = modelo == 'Outro'; // Verificar se "Outro" foi selecionado
+                          if (!_isOutroModelo) {
+                            // Se não for "Outro", puxar a categoria do modelo selecionado
+                            _fetchCategoryForSelectedModel();
+                          } else {
+                            _selectedCategoria = null; // Limpar categoria se "Outro" for selecionado
+                          }
+                        });
+                      },
+                      validator: (value) => value == null ? 'Selecione um modelo' : null,
+                    );
+                  },
                 ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
-                },
-              ),
-              SizedBox(height: 16.0),
+
+              // Campos adicionais se "Outro" for selecionado
+              if (_isOutroModelo) ...[
+                TextFormField(
+                  controller: _outroModeloController,
+                  decoration: InputDecoration(hintText: "Digite o Modelo"),
+                  validator: (text) => text!.isEmpty ? "Campo Vazio" : null,
+                ),
+                DropdownButtonFormField<String>(
+                  value: _selectedCategoria,
+                  items: [
+                    DropdownMenuItem(child: Text('Hatch'), value: 'Hatch'),
+                    DropdownMenuItem(child: Text('Sedan'), value: 'Sedan'),
+                    DropdownMenuItem(child: Text('SUV'), value: 'SUV'),
+                    DropdownMenuItem(child: Text('Caminhonete'), value: 'Caminhonete'),
+                  ],
+                  hint: Text('Selecione a Categoria'),
+                  onChanged: (categoria) {
+                    setState(() {
+                      _selectedCategoria = categoria;
+                    });
+                  },
+                  validator: (value) => value == null ? 'Selecione uma categoria' : null,
+                ),
+              ],
+
+              // Demais campos (cor, placa)
               TextFormField(
                 controller: _corController,
-                decoration: InputDecoration(
-                  hintText: "Cor do Veículo",
-                ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
-                },
+                decoration: InputDecoration(hintText: "Cor do Veículo"),
+                validator: (text) => text!.isEmpty ? "Campo Vazio" : null,
               ),
               SizedBox(height: 16.0),
               TextFormField(
                 controller: _placaController,
-                decoration: InputDecoration(
-                  hintText: "Placa do Veículo",
-                ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
-                },
+                decoration: InputDecoration(hintText: "Placa do Veículo"),
+                validator: (text) => text!.isEmpty ? "Campo Vazio" : null,
               ),
+
               SizedBox(height: 16.0),
               ElevatedButton(
                 child: Text(
                   "Cadastrar Veículo",
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    color: Colors.black,
-                  ),
+                  style: TextStyle(fontSize: 18.0, color: Colors.black),
                 ),
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
+                    // Monta o dado do veículo com ou sem o campo "Outro"
                     Map<String, dynamic> vehicleData = {
-                      "marca": _marcaController.text,
-                      "modelo": _modeloController.text,
+                      "marca": _selectedMarca,
+                      "modelo": _isOutroModelo ? _outroModeloController.text : _selectedModelo,
                       "cor": _corController.text,
                       "placa": _placaController.text,
+                      "categoria": _selectedCategoria, // Adicionar a categoria aqui
                     };
 
                     model.createVehicle(
@@ -224,139 +261,26 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
     );
   }
 
-  void _showVehicleEditForm(BuildContext context, VehicleModel model, String vehicleId, Map<String, dynamic> vehicleData) {
-    _marcaController.text = vehicleData['marca'];
-    _modeloController.text = vehicleData['modelo'];
-    _corController.text = vehicleData['cor'];
-    _placaController.text = vehicleData['placa'];
+  // Função para buscar a categoria ao selecionar um modelo
+  void _fetchCategoryForSelectedModel() async {
+    if (_selectedMarca != null && _selectedModelo != null) {
+      DocumentSnapshot modelDoc = await FirebaseFirestore.instance
+          .collection('cars')
+          .doc(_selectedMarca)
+          .collection('modelos')
+          .doc(_selectedModelo)
+          .get();
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          left: 16.0,
-          right: 16.0,
-          top: 16.0,
-        ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextFormField(
-                controller: _marcaController,
-                decoration: InputDecoration(
-                  hintText: "Marca",
-                ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
-                },
-              ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                controller: _modeloController,
-                decoration: InputDecoration(
-                  hintText: "Modelo",
-                ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
-                },
-              ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                controller: _corController,
-                decoration: InputDecoration(
-                  hintText: "Cor do Veículo",
-                ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
-                },
-              ),
-              SizedBox(height: 16.0),
-              TextFormField(
-                controller: _placaController,
-                decoration: InputDecoration(
-                  hintText: "Placa do Veículo",
-                ),
-                validator: (text) {
-                  if (text!.isEmpty) return "Campo Vazio";
-                },
-              ),
-              SizedBox(height: 16.0),
-              ElevatedButton(
-                child: Text(
-                  "Atualizar Veículo",
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    color: Colors.black,
-                  ),
-                ),
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    Map<String, dynamic> updatedVehicleData = {
-                      "marca": _marcaController.text,
-                      "modelo": _modeloController.text,
-                      "cor": _corController.text,
-                      "placa": _placaController.text,
-                    };
-
-                    model.updateVehicle(
-                      vehicleId: vehicleId,
-                      vehicleData: updatedVehicleData,
-                      onSuccess: _onSuccess,
-                      onFail: _onFail,
-                    );
-
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              SizedBox(height: 16.0),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _deleteVehicle(BuildContext context, VehicleModel model, String vehicleId) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Deletar Veículo"),
-        content: Text("Você tem certeza que deseja deletar este veículo?"),
-        actions: <Widget>[
-          TextButton(
-            child: Text("Cancelar"),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          TextButton(
-            child: Text("Deletar"),
-            onPressed: () {
-              model.deleteVehicle(
-                vehicleId: vehicleId,
-                onSuccess: () {
-                  Navigator.of(context).pop();
-                  _onSuccess();
-                },
-                onFail: _onFail,
-              );
-            },
-          ),
-        ],
-      ),
-    );
+      setState(() {
+        _selectedCategoria = modelDoc['categoria']; // Atualiza a categoria com o valor do banco de dados
+      });
+    }
   }
 
   void _onSuccess() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Operação realizada com sucesso!'),
-        duration: Duration(seconds: 2),
+        content: Text("Veículo Cadastrado com Sucesso!"),
         backgroundColor: Colors.green,
       ),
     );
@@ -365,8 +289,7 @@ class _RegisterVehicleScreenState extends State<VehicleRegisterScreen> {
   void _onFail() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Falha ao realizar operação. Tente novamente.'),
-        duration: Duration(seconds: 2),
+        content: Text("Falha ao Cadastrar Veículo"),
         backgroundColor: Colors.red,
       ),
     );
